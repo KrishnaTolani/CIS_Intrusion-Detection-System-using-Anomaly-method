@@ -26,6 +26,15 @@ try:
     
     st.success("✅ Model loaded successfully!")
     
+    # Prediction function
+    def predict_intrusion(features):
+        scaled = scaler.transform([features])
+        pred = model.predict(scaled, verbose=0)
+        error = np.mean((scaled - pred) ** 2)
+        is_attack = error > data['threshold']
+        confidence = error / data['threshold']
+        return is_attack, confidence, error
+    
     # Create tabs
     tab1, tab2, tab3, tab4 = st.tabs(["🏠 Home", "📖 User Guide", "🔍 Manual Test", "🧪 Sample Test"])
     
@@ -177,11 +186,11 @@ try:
             bytes_per_sec,
             packet_size,
             connection_freq * protocol_multiplier,
-            flow_duration / packet_count if packet_count > 0 else 0,  # Time per packet
-            packet_size * packet_count,  # Total bytes
-            bytes_per_sec / packet_size if packet_size > 0 else 0,  # Packets per second
-            np.log(flow_duration + 1),  # Log duration
-            packet_count / (flow_duration / 1000) if flow_duration > 0 else 0  # Packet rate
+            flow_duration / packet_count if packet_count > 0 else 0,
+            packet_size * packet_count,
+            bytes_per_sec / packet_size if packet_size > 0 else 0,
+            np.log(flow_duration + 1),
+            packet_count / (flow_duration / 1000) if flow_duration > 0 else 0
         ]
         
         # Pad with zeros to match model input size
@@ -190,14 +199,6 @@ try:
         
         # Prediction
         if st.button("🔍 Analyze Network Flow", type="primary"):
-            def predict_intrusion(features):
-                scaled = scaler.transform([features])
-                pred = model.predict(scaled, verbose=0)
-                error = np.mean((scaled - pred) ** 2)
-                is_attack = error > data['threshold']
-                confidence = error / data['threshold']
-                return is_attack, confidence, error
-            
             is_attack, confidence, error = predict_intrusion(features)
             
             col1, col2 = st.columns(2)
@@ -253,14 +254,6 @@ try:
             st.info("This sample represents typical web browsing traffic")
             
             if st.button("🔍 Test Normal Traffic Sample"):
-                def predict_intrusion(features):
-                    scaled = scaler.transform([features])
-                    pred = model.predict(scaled, verbose=0)
-                    error = np.mean((scaled - pred) ** 2)
-                    is_attack = error > data['threshold']
-                    confidence = error / data['threshold']
-                    return is_attack, confidence, error
-                
                 is_attack, confidence, error = predict_intrusion(data['sample_benign'])
                 
                 if is_attack:
@@ -276,14 +269,6 @@ try:
             st.warning("This sample represents malicious network activity")
             
             if st.button("🚨 Test Attack Traffic Sample"):
-                def predict_intrusion(features):
-                    scaled = scaler.transform([features])
-                    pred = model.predict(scaled, verbose=0)
-                    error = np.mean((scaled - pred) ** 2)
-                    is_attack = error > data['threshold']
-                    confidence = error / data['threshold']
-                    return is_attack, confidence, error
-                
                 is_attack, confidence, error = predict_intrusion(data['sample_attack'])
                 
                 if is_attack:
